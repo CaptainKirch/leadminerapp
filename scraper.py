@@ -56,17 +56,32 @@ def scrape_cards():
             link = "N/A"
 
         try:
-            phone = extract_phone(card.text)  # ← replaced old logic
+            phone = extract_phone(card.text)
         except:
             phone = "N/A"
+
+        try:
+            # Google Maps website button (if available)
+            website = next(
+                (
+                    a.get_attribute("href")
+                    for a in card.find_elements(By.TAG_NAME, "a")
+                    if "http" in a.get_attribute("href") and "google.com" not in a.get_attribute("href")
+                ),
+                "N/A"
+            )
+        except:
+            website = "N/A"
 
         results.append({
             "Name": name,
             "Link": link,
-            "Phone": phone
+            "Phone": phone,
+            "Website": website
         })
 
     return results
+
 
 def save_to_csv(data):
     if not data:
