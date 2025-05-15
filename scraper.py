@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import csv
 import os
@@ -10,43 +12,42 @@ SEARCH_URL = "https://www.google.com/maps/search/cleaning+services+in+kelowna"
 
 options = Options()
 options.binary_location = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
-# options.add_argument("--headless=new")
+# options.add_argument("--headless=new")  # Disable headless for now
 options.add_argument("--window-size=1920,1080")
 
 driver = webdriver.Chrome(service=Service("./chromedriver"), options=options)
 
 def scroll_page():
-    scrollable_div_xpath = '//div[@role="feed"]'
-    scrollable = driver.find_element(By.XPATH, scrollable_div_xpath)
-    for _ in range(10):  # Scroll 10 times
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable)
-        time.sleep(2)
+    try:
+        scrollable = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//div[@role="feed"]'))
+        )
+        for _ in range(10):
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable)
+            time.sleep(2)
+    except Exception as e:
+        print("❌ Scroll error:", e)
 
 def scrape_cards():
-    cards = driver.find_elements(By.XPATH, '//div[@role="article"]')
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "Nv2PK"))
+    )
+
+    cards = driver.find_elements(By.CLASS_NAME, "Nv2PK")
+    print(f"✅ Found {len(cards)} business cards")
+
     results = []
 
     for card in cards:
         try:
-            name = card.find_element(By.CLASS_NAME, "qBF1Pd").text
+            name = card.find_element(By.CSS_SELECTOR, "a.hfpxzc").text
         except:
             name = "N/A"
 
         try:
-            rating = card.find_element(By.CLASS_NAME, "MW4etd").text
+            link = card.find_element(By.CSS_SELECTOR, "a.hfpxzc").get_attribute("href")
         except:
-            rating = "N/A"
-
-        try:
-            address = card.find_element(By.CLASS_NAME, "W4Efsd").text
-        except:
-            address = "N/A"
-
-        try:
-            links = card.find_elements(By.TAG_NAME, "a")
-            website = next((a.get_attribute("href") for a in links if "http" in a.get_attribute("href")), "N/A")
-        except:
-            website = "N/A"
+            link = "N/A"
 
         try:
             phone = next((line for line in card.text.split("\n") if "(" in line and "-" in line), "N/A")
@@ -55,13 +56,12 @@ def scrape_cards():
 
         results.append({
             "Name": name,
-            "Rating": rating,
-            "Address": address,
-            "Phone": phone,
-            "Website": website
+            "Link": link,
+            "Phone": phone
         })
-        print(f"Found {len(cards)} card elements on page.")
+
     return results
+
 
 def save_to_csv(data):
     if not data:
@@ -74,22 +74,23 @@ def save_to_csv(data):
         writer.writeheader()
         writer.writerows(data)
 
+    print("✅ Data saved to output/results.csv")
 
 def main():
     print("Launching browser...")
     driver.get(SEARCH_URL)
-    time.sleep(3)
-    print("Scrolling to load all results...")
-    scroll_page()
-    print("Scraping data...")
-    data = scrape_cards()
-    print(f"Found {len(data)} listings. Saving to CSV...")
-    save_to_csv(data)
-    print("✅ Done. Check output/results.csv")
-    driver.quit()
-    print("Waiting for cards to load...")
-    time.sleep(10)
 
+    input("📌 Browser loaded. Press Enter to begin scrolling...")
+
+    print("Scrolling listings...")
+    scroll_page()
+
+    print("Scraping business data...")
+    data = scrape_cards()
+
+    print(f"Found {len(data)} listings. Saving...")
+    save_to_csv(data)
+    driver.quit()
 
 if __name__ == "__main__":
     main()
