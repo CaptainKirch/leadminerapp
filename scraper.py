@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import csv
 import os
+import re  # ← Added for phone number extraction
 
 SEARCH_URL = "https://www.google.com/maps/search/dental+clinics+near+chicago"
 
@@ -27,6 +28,11 @@ def scroll_page():
             time.sleep(2)
     except Exception as e:
         print("❌ Scroll error:", e)
+
+# ✅ More reliable phone number detection
+def extract_phone(text):
+    match = re.search(r"\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}", text)
+    return match.group() if match else "N/A"
 
 def scrape_cards():
     WebDriverWait(driver, 10).until(
@@ -50,7 +56,7 @@ def scrape_cards():
             link = "N/A"
 
         try:
-            phone = next((line for line in card.text.split("\n") if "(" in line and "-" in line), "N/A")
+            phone = extract_phone(card.text)  # ← replaced old logic
         except:
             phone = "N/A"
 
@@ -61,7 +67,6 @@ def scrape_cards():
         })
 
     return results
-
 
 def save_to_csv(data):
     if not data:
