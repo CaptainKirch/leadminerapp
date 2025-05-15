@@ -8,7 +8,7 @@ import time
 import csv
 import os
 
-SEARCH_URL = "https://www.google.com/maps/search/cleaning+services+in+kelowna"
+SEARCH_URL = "https://www.google.com/maps/search/dental+clinics+near+chicago"
 
 options = Options()
 options.binary_location = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
