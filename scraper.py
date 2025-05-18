@@ -150,6 +150,8 @@ def main():
         print("⏳ Waiting 5 seconds for browser load...")
         time.sleep(5)
 
+        print("⬇️ Scrolling to load all listings...")
+        scroll_page()
 
         print("🔎 Scraping cards...")
         data = scrape_cards(keyword)
@@ -157,6 +159,7 @@ def main():
 
     save_to_csv(all_data)
     driver.quit()
+
 
 if __name__ == "__main__":
     main()
