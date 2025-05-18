@@ -54,9 +54,16 @@ def scroll_page():
         scrollable = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//div[@role="feed"]'))
         )
-        for _ in range(10):
+        last_height = driver.execute_script("return arguments[0].scrollHeight", scrollable)
+
+        for _ in range(20):  # Scroll more times
             driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable)
             time.sleep(2)
+
+            new_height = driver.execute_script("return arguments[0].scrollHeight", scrollable)
+            if new_height == last_height:
+                break
+            last_height = new_height
     except Exception as e:
         print("❌ Scroll error:", e)
 
@@ -75,12 +82,17 @@ def scrape_cards(keyword):
 
     for card in cards:
         try:
-            name = card.find_element(By.CSS_SELECTOR, "a.hfpxzc").text
+            name_elem = card.find_element(By.CLASS_NAME, "qBF1Pd")  # new selector
+            name = name_elem.text.strip()
         except:
-            name = "N/A"
+            try:
+                name = card.text.split("\n")[0].strip()
+            except:
+                name = "N/A"
 
         try:
-            link = card.find_element(By.CSS_SELECTOR, "a.hfpxzc").get_attribute("href")
+            link_elem = card.find_element(By.CSS_SELECTOR, "a.hfpxzc")
+            link = link_elem.get_attribute("href")
         except:
             link = "N/A"
 
@@ -94,22 +106,25 @@ def scrape_cards(keyword):
                 (
                     a.get_attribute("href")
                     for a in card.find_elements(By.TAG_NAME, "a")
-                    if "http" in a.get_attribute("href") and "google.com" not in a.get_attribute("href")
+                    if a.get_attribute("href") and "http" in a.get_attribute("href") and "google.com" not in a.get_attribute("href")
                 ),
                 "N/A"
             )
         except:
             website = "N/A"
 
-        results.append({
-            "Keyword": keyword,
-            "Name": name,
-            "Link": link,
-            "Phone": phone,
-            "Website": website
-        })
+        # Only add if at least name or website is valid
+        if name != "N/A" or website != "N/A":
+            results.append({
+                "Keyword": keyword,
+                "Name": name,
+                "Link": link,
+                "Phone": phone,
+                "Website": website
+            })
 
     return results
+
 
 def save_to_csv(data):
     if not data:
@@ -132,8 +147,9 @@ def main():
         print(f"\n🔍 Opening: {search_url}")
         driver.get(search_url)
 
-        input("📌 Press Enter after browser loads to begin scrolling...")
-        scroll_page()
+        print("⏳ Waiting 5 seconds for browser load...")
+        time.sleep(5)
+
 
         print("🔎 Scraping cards...")
         data = scrape_cards(keyword)
