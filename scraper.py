@@ -7,14 +7,45 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import csv
 import os
-import re  # ← Added for phone number extraction
+import re
 
-SEARCH_URL = "https://www.google.com/maps/search/dental+clinics+near+chicago"
+# Keywords to loop through
+keywords = [
+    "gyms near Cook County Illinois",
+    "medical offices near Cook County Illinois",
+    "dentists near Cook County Illinois",
+    "churches near Cook County Illinois",
+    "nail salons near Cook County Illinois",
+    "hair salons near Cook County Illinois",
+    "manufacturing facilities near Cook County Illinois",
+    "gyms near Will County Illinois",
+    "medical offices near Will County Illinois",
+    "dentists near Will County Illinois",
+    "churches near Will County Illinois",
+    "nail salons near Will County Illinois",
+    "hair salons near Will County Illinois",
+    "manufacturing facilities near Will County Illinois",
+    "gyms near DuPage County Illinois",
+    "medical offices near DuPage County Illinois",
+    "dentists near DuPage County Illinois",
+    "churches near DuPage County Illinois",
+    "nail salons near DuPage County Illinois",
+    "hair salons near DuPage County Illinois",
+    "manufacturing facilities near DuPage County Illinois",
+    "gyms near Chicago Illinois",
+    "medical offices near Chicago Illinois",
+    "dentists near Chicago Illinois",
+    "churches near Chicago Illinois",
+    "nail salons near Chicago Illinois",
+    "hair salons near Chicago Illinois",
+    "manufacturing facilities near Chicago Illinois"
+]
 
+# Chrome driver config
 options = Options()
 options.binary_location = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
-# options.add_argument("--headless=new")  # Disable headless for now
 options.add_argument("--window-size=1920,1080")
+# options.add_argument("--headless=new")  # Optional headless mode
 
 driver = webdriver.Chrome(service=Service("./chromedriver"), options=options)
 
@@ -29,18 +60,16 @@ def scroll_page():
     except Exception as e:
         print("❌ Scroll error:", e)
 
-# ✅ More reliable phone number detection
 def extract_phone(text):
     match = re.search(r"\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}", text)
     return match.group() if match else "N/A"
 
-def scrape_cards():
+def scrape_cards(keyword):
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "Nv2PK"))
     )
-
     cards = driver.find_elements(By.CLASS_NAME, "Nv2PK")
-    print(f"✅ Found {len(cards)} business cards")
+    print(f"✅ Found {len(cards)} business cards for '{keyword}'")
 
     results = []
 
@@ -61,7 +90,6 @@ def scrape_cards():
             phone = "N/A"
 
         try:
-            # Google Maps website button (if available)
             website = next(
                 (
                     a.get_attribute("href")
@@ -74,6 +102,7 @@ def scrape_cards():
             website = "N/A"
 
         results.append({
+            "Keyword": keyword,
             "Name": name,
             "Link": link,
             "Phone": phone,
@@ -81,7 +110,6 @@ def scrape_cards():
         })
 
     return results
-
 
 def save_to_csv(data):
     if not data:
@@ -97,20 +125,24 @@ def save_to_csv(data):
     print("✅ Data saved to output/results.csv")
 
 def main():
-    print("Launching browser...")
-    driver.get(SEARCH_URL)
+    all_data = []
 
-    input("📌 Browser loaded. Press Enter to begin scrolling...")
+    for keyword in keywords:
+        search_url = f"https://www.google.com/maps/search/{keyword.replace(' ', '+')}"
+        print(f"\n🔍 Opening: {search_url}")
+        driver.get(search_url)
 
-    print("Scrolling listings...")
-    scroll_page()
+        input("📌 Press Enter after browser loads to begin scrolling...")
+        scroll_page()
 
-    print("Scraping business data...")
-    data = scrape_cards()
+        print("🔎 Scraping cards...")
+        data = scrape_cards(keyword)
+        all_data.extend(data)
 
-    print(f"Found {len(data)} listings. Saving...")
-    save_to_csv(data)
+    save_to_csv(all_data)
     driver.quit()
 
 if __name__ == "__main__":
     main()
+
+
