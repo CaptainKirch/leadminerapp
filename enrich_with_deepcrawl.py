@@ -6,18 +6,24 @@ import time
 from urllib.parse import urljoin, urlparse
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
-MAX_PAGES = 8  # Increased pages per site to scan
+MAX_PAGES = 8
+EMAIL_REGEX = re.compile(
+    r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+|[a-zA-Z0-9_.+-]+\s*\[at\]\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"
+)
 
 def extract_emails_from_url(url):
     try:
         resp = requests.get(url, headers=HEADERS, timeout=10)
         if resp.status_code != 200:
             return []
+        if 'text/html' not in resp.headers.get('Content-Type', ''):
+            return []
 
         soup = BeautifulSoup(resp.text, "html.parser")
         text = soup.get_text()
-        emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
-        return list(set(emails))
+        raw_emails = EMAIL_REGEX.findall(text)
+        cleaned = list(set(e.replace("[at]", "@").replace(" ", "") for e in raw_emails))
+        return cleaned
     except Exception as e:
         print(f"❌ Email extraction failed at {url}: {e}")
         return []
@@ -34,16 +40,24 @@ def get_internal_links(base_url, html):
             links.add(absolute)
     return list(links)
 
-def prioritize_links(links):
+def prioritize_links(links, html):
     priority = ["contact", "about", "team", "staff", "leadership", "book", "appointment", "connect", "schedule", "info", "support"]
-    scored = sorted(links, key=lambda link: min([link.lower().find(p) if p in link.lower() else 999 for p in priority]))
-    return scored[:MAX_PAGES]
+    soup = BeautifulSoup(html, "html.parser")
+
+    def score(link):
+        href_score = min([link.lower().find(k) if k in link.lower() else 999 for k in priority])
+        anchor_text = next((a.text.lower() for a in soup.find_all("a", href=True) if a['href'] == link), "")
+        text_score = min([anchor_text.find(k) if k in anchor_text else 999 for k in priority])
+        return min(href_score, text_score)
+
+    return sorted(set(links), key=score)[:MAX_PAGES]
 
 def enrich_email(domain_url):
     try:
         print(f"🔍 Scanning {domain_url}")
         homepage = requests.get(domain_url, headers=HEADERS, timeout=10)
-        if homepage.status_code != 200:
+        if homepage.status_code != 200 or '<script' in homepage.text[:1000].lower():
+            print(f"⚠️ Skipping JS-heavy or unreachable site: {domain_url}")
             return "Failed"
 
         # Step 1: Try homepage
@@ -54,7 +68,7 @@ def enrich_email(domain_url):
 
         # Step 2: Get internal links
         internal_links = get_internal_links(domain_url, homepage.text)
-        internal_links = prioritize_links(internal_links)
+        internal_links = prioritize_links(internal_links, homepage.text)
 
         # Step 3: Scan internal pages
         for link in internal_links:
@@ -64,12 +78,11 @@ def enrich_email(domain_url):
                 print(f"📬 Found {len(emails)} on {link} → {emails}")
                 return ", ".join(emails)
 
-        # Step 4: Fallback guess (optional, not used unless you want to)
-        # fallback = f"info@{urlparse(domain_url).netloc}"
-        # print(f"⚠️ No email found. Fallback guessed: {fallback}")
-        # return fallback
+        # Step 4: Fallback guess
+        fallback = f"info@{urlparse(domain_url).netloc}"
+        print(f"⚠️ No email found. Fallback guessed: {fallback}")
+        return f"Guessed: {fallback}"
 
-        return "Not found"
     except Exception as e:
         print(f"❌ Error with {domain_url}: {e}")
         return "Failed"
@@ -84,8 +97,8 @@ def clean_url(url):
     except:
         return None
 
-def enrich_csv():
-    df = pd.read_csv("output/results.csv")
+def enrich_csv(csv_path="output/results.csv"):
+    df = pd.read_csv(csv_path)
 
     if "Email" not in df.columns:
         df["Email"] = "Not found"
