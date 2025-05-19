@@ -75,8 +75,9 @@ def scrape_full_listing():
         name = "N/A"
 
     try:
-        phone_elem = driver.find_element(By.XPATH, '//button[contains(@aria-label, "Phone number")]')
-        phone = phone_elem.get_attribute("aria-label").split(":")[-1].strip()
+        page_text = driver.page_source
+        match = re.search(r"\\(?\\d{3}\\)?[\\s\\-]?\\d{3}[\\s\\-]?\\d{4}", page_text)
+        phone = match.group() if match else "N/A"
     except:
         phone = "N/A"
 
@@ -105,6 +106,7 @@ def scrape_full_listing():
         category = "N/A"
 
     return name, phone, website, address, rating, category
+
 
 def main():
     results = []
