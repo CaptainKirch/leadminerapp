@@ -10,34 +10,57 @@ import os
 import re
 
 keywords = [
-    "gyms near Cook County Illinois",
-    "medical offices near Cook County Illinois",
-    "dentists near Cook County Illinois",
-    "churches near Cook County Illinois",
-    "nail salons near Cook County Illinois",
-    "hair salons near Cook County Illinois",
-    "manufacturing facilities near Cook County Illinois",
-    "gyms near Will County Illinois",
-    "medical offices near Will County Illinois",
-    "dentists near Will County Illinois",
-    "churches near Will County Illinois",
-    "nail salons near Will County Illinois",
-    "hair salons near Will County Illinois",
-    "manufacturing facilities near Will County Illinois",
-    "gyms near DuPage County Illinois",
-    "medical offices near DuPage County Illinois",
-    "dentists near DuPage County Illinois",
-    "churches near DuPage County Illinois",
-    "nail salons near DuPage County Illinois",
-    "hair salons near DuPage County Illinois",
-    "manufacturing facilities near DuPage County Illinois",
-    "gyms near Chicago Illinois",
-    "medical offices near Chicago Illinois",
-    "dentists near Chicago Illinois",
-    "churches near Chicago Illinois",
-    "nail salons near Chicago Illinois",
-    "hair salons near Chicago Illinois",
-    "manufacturing facilities near Chicago Illinois"
+    "accountants near Penticton British Columbia",
+    "law offices near Penticton British Columbia",
+    "gyms near Penticton British Columbia",
+    "nail salons near Penticton British Columbia",
+    "botox clinics near Penticton British Columbia",
+    "dentist practices near Penticton British Columbia",
+    "property managers near Penticton British Columbia",
+    "massage therapy near Penticton British Columbia",
+    "dance studios near Penticton British Columbia",
+    "physiotherapy near Penticton British Columbia",
+    "real estate offices near Penticton British Columbia",
+    "mortgage brokers near Penticton British Columbia",
+    "manufacturing businesses near Penticton British Columbia",
+    "construction businesses near Penticton British Columbia",
+    "plumbing companies near Penticton British Columbia",
+    "industrial buildings near Penticton British Columbia",
+    "commercial real estate near Penticton British Columbia",
+    "accountants near Kelowna British Columbia",
+    "law offices near Kelowna British Columbia",
+    "gyms near Kelowna British Columbia",
+    "nail salons near Kelowna British Columbia",
+    "botox clinics near Kelowna British Columbia",
+    "dentist practices near Kelowna British Columbia",
+    "property managers near Kelowna British Columbia",
+    "massage therapy near Kelowna British Columbia",
+    "dance studios near Kelowna British Columbia",
+    "physiotherapy near Kelowna British Columbia",
+    "real estate offices near Kelowna British Columbia",
+    "mortgage brokers near Kelowna British Columbia",
+    "manufacturing businesses near Kelowna British Columbia",
+    "construction businesses near Kelowna British Columbia",
+    "plumbing companies near Kelowna British Columbia",
+    "industrial buildings near Kelowna British Columbia",
+    "commercial real estate near Kelowna British Columbia",
+    "accountants near West Kelowna British Columbia",
+    "law offices near West Kelowna British Columbia",
+    "gyms near West Kelowna British Columbia",
+    "nail salons near West Kelowna British Columbia",
+    "botox clinics near West Kelowna British Columbia",
+    "dentist practices near West Kelowna British Columbia",
+    "property managers near West Kelowna British Columbia",
+    "massage therapy near West Kelowna British Columbia",
+    "dance studios near West Kelowna British Columbia",
+    "physiotherapy near West Kelowna British Columbia",
+    "real estate offices near West Kelowna British Columbia",
+    "mortgage brokers near West Kelowna British Columbia",
+    "manufacturing businesses near West Kelowna British Columbia",
+    "construction businesses near West Kelowna British Columbia",
+    "plumbing companies near West Kelowna British Columbia",
+    "industrial buildings near West Kelowna British Columbia",
+    "commercial real estate near West Kelowna British Columbia"
 ]
 
 options = Options()
@@ -158,13 +181,13 @@ def main():
                 print(f"❌ Failed to scrape listing: {link}", e)
 
     os.makedirs("output", exist_ok=True)
-    with open("output/results_clickin.csv", "w", newline="", encoding="utf-8") as f:
+    with open("output/results_clickin_v2.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["Keyword", "Name", "Phone", "Website", "Address", "Rating", "Category", "GoogleMapsURL"])
         writer.writeheader()
         writer.writerows(results)
 
     driver.quit()
-    print("✅ Scraping complete. Results saved to output/results_clickin.csv")
+    print("✅ Scraping complete. Results saved to output/results_clickin_v2.csv")
 
 if __name__ == "__main__":
     main()
