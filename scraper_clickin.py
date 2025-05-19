@@ -64,10 +64,6 @@ def scroll_page():
     except Exception as e:
         print("❌ Scroll error:", e)
 
-def extract_phone(text):
-    match = re.search(r"\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}", text)
-    return match.group() if match else "N/A"
-
 def scrape_full_listing():
     try:
         name = driver.find_element(By.XPATH, '//h1').text.strip()
@@ -76,7 +72,7 @@ def scrape_full_listing():
 
     try:
         page_text = driver.page_source
-        match = re.search(r"\\(?\\d{3}\\)?[\\s\\-]?\\d{3}[\\s\\-]?\\d{4}", page_text)
+        match = re.search(r"\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}", page_text)
         phone = match.group() if match else "N/A"
     except:
         phone = "N/A"
@@ -106,7 +102,6 @@ def scrape_full_listing():
         category = "N/A"
 
     return name, phone, website, address, rating, category
-
 
 def main():
     results = []
