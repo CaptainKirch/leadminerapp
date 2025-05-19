@@ -78,17 +78,14 @@ def enrich_email(domain_url):
             if not html:
                 return "Failed"
 
-        # Step 1: Try homepage
         emails = extract_emails_from_html(html)
         if emails:
             print(f"📬 Found {len(emails)} on homepage → {emails}")
             return ", ".join(emails)
 
-        # Step 2: Get internal links
         internal_links = get_internal_links(domain_url, html)
         internal_links = prioritize_links(internal_links, html)
 
-        # Step 3: Scan internal pages
         for link in internal_links:
             time.sleep(1)
             link_html = get_rendered_html(link) or requests.get(link, headers=HEADERS, timeout=10).text
@@ -115,11 +112,13 @@ def clean_url(url):
     except:
         return None
 
-def enrich_csv(csv_path="output/results.csv"):
+def enrich_csv(csv_path="output/results_clickin.csv"):
     df = pd.read_csv(csv_path)
 
     if "Email" not in df.columns:
         df["Email"] = "Not found"
+
+    seen_domains = {}
 
     for idx, row in df.iterrows():
         raw_url = row.get("Website", "")
@@ -130,10 +129,16 @@ def enrich_csv(csv_path="output/results.csv"):
         if not clean_domain:
             continue
 
+        if clean_domain in seen_domains:
+            df.at[idx, "Email"] = seen_domains[clean_domain]
+            print(f"🔁 Skipping repeat domain {clean_domain}, reused → {seen_domains[clean_domain]}")
+            continue
+
         if row["Email"] in ["Not found", "Failed"]:
             email = enrich_email(clean_domain)
             print(f"{row['Name']} → {email}")
             df.at[idx, "Email"] = email
+            seen_domains[clean_domain] = email
             time.sleep(1.5)
 
         if idx % 25 == 0:
