@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import time
 from urllib.parse import urljoin, urlparse
+from playwright.sync_api import sync_playwright
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 MAX_PAGES = 8
@@ -11,19 +12,32 @@ EMAIL_REGEX = re.compile(
     r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+|[a-zA-Z0-9_.+-]+\s*\[at\]\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"
 )
 
+def get_rendered_html(url):
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=15000)
+            html = page.content()
+            browser.close()
+            return html
+    except Exception as e:
+        print(f"❌ Playwright failed at {url}: {e}")
+        return None
+
+def extract_emails_from_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text()
+    raw_emails = EMAIL_REGEX.findall(text)
+    cleaned = list(set(e.replace("[at]", "@").replace(" ", "") for e in raw_emails))
+    return cleaned
+
 def extract_emails_from_url(url):
     try:
         resp = requests.get(url, headers=HEADERS, timeout=10)
-        if resp.status_code != 200:
+        if resp.status_code != 200 or 'text/html' not in resp.headers.get('Content-Type', ''):
             return []
-        if 'text/html' not in resp.headers.get('Content-Type', ''):
-            return []
-
-        soup = BeautifulSoup(resp.text, "html.parser")
-        text = soup.get_text()
-        raw_emails = EMAIL_REGEX.findall(text)
-        cleaned = list(set(e.replace("[at]", "@").replace(" ", "") for e in raw_emails))
-        return cleaned
+        return extract_emails_from_html(resp.text)
     except Exception as e:
         print(f"❌ Email extraction failed at {url}: {e}")
         return []
@@ -56,29 +70,33 @@ def enrich_email(domain_url):
     try:
         print(f"🔍 Scanning {domain_url}")
         homepage = requests.get(domain_url, headers=HEADERS, timeout=10)
-        if homepage.status_code != 200 or '<script' in homepage.text[:1000].lower():
-            print(f"⚠️ Skipping JS-heavy or unreachable site: {domain_url}")
-            return "Failed"
+
+        html = homepage.text if homepage.status_code == 200 else None
+        if not html or '<script' in html.lower():
+            print("⚠️ Falling back to Playwright rendering")
+            html = get_rendered_html(domain_url)
+            if not html:
+                return "Failed"
 
         # Step 1: Try homepage
-        emails = extract_emails_from_url(domain_url)
+        emails = extract_emails_from_html(html)
         if emails:
             print(f"📬 Found {len(emails)} on homepage → {emails}")
             return ", ".join(emails)
 
         # Step 2: Get internal links
-        internal_links = get_internal_links(domain_url, homepage.text)
-        internal_links = prioritize_links(internal_links, homepage.text)
+        internal_links = get_internal_links(domain_url, html)
+        internal_links = prioritize_links(internal_links, html)
 
         # Step 3: Scan internal pages
         for link in internal_links:
             time.sleep(1)
-            emails = extract_emails_from_url(link)
+            link_html = get_rendered_html(link) or requests.get(link, headers=HEADERS, timeout=10).text
+            emails = extract_emails_from_html(link_html)
             if emails:
                 print(f"📬 Found {len(emails)} on {link} → {emails}")
                 return ", ".join(emails)
 
-        # Step 4: Fallback guess
         fallback = f"info@{urlparse(domain_url).netloc}"
         print(f"⚠️ No email found. Fallback guessed: {fallback}")
         return f"Guessed: {fallback}"
