@@ -206,34 +206,55 @@ def main():
         scroll_page()
 
         business_links = set()
-        cards = driver.find_elements(By.XPATH, '//a[contains(@href, "/place/")]')
-        for card in cards:
-            link = card.get_attribute("href")
-            if link and link.startswith("https://www.google.com/maps/place/"):
-                business_links.add(link)
+        try:
+            cards = driver.find_elements(By.XPATH, '//a[contains(@href, "/place/")]')
+            for card in cards:
+                link = card.get_attribute("href")
+                if link and link.startswith("https://www.google.com/maps/place/"):
+                    business_links.add(link)
 
-        print(f"🔗 Found {len(business_links)} listings to click for '{keyword}'")
+            print(f"🔗 Found {len(business_links)} listings to click for '{keyword}'")
 
-        for link in business_links:
-            try:
-                driver.get(link)
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//h1")))
-                time.sleep(6)
-                name, phone, website, address, rating, category = scrape_full_listing()
-                results.append({
-                    "Keyword": keyword,
-                    "Name": name,
-                    "Phone": phone,
-                    "Website": website,
-                    "Address": address,
-                    "Rating": rating,
-                    "Category": category,
-                    "GoogleMapsURL": link
-                })
-                print(f"✅ {name} | {phone} | {website} | {address} | {rating} | {category}")
-                time.sleep(2)
-            except Exception as e:
-                print(f"❌ Failed to scrape listing: {link}", e)
+            if len(business_links) == 0:
+                print("⚠️ No listings, scraping current page directly...")
+                try:
+                    name, phone, website, address, rating, category = scrape_full_listing()
+                    results.append({
+                        "Keyword": keyword,
+                        "Name": name,
+                        "Phone": phone,
+                        "Website": website,
+                        "Address": address,
+                        "Rating": rating,
+                        "Category": category,
+                        "GoogleMapsURL": driver.current_url
+                    })
+                    print(f"✅ {name} | {phone} | {website} | {address} | {rating} | {category}")
+                except Exception as e:
+                    print(f"❌ Failed to scrape direct page for: {keyword}", e)
+            else:
+                for link in business_links:
+                    try:
+                        driver.get(link)
+                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//h1")))
+                        time.sleep(6)
+                        name, phone, website, address, rating, category = scrape_full_listing()
+                        results.append({
+                            "Keyword": keyword,
+                            "Name": name,
+                            "Phone": phone,
+                            "Website": website,
+                            "Address": address,
+                            "Rating": rating,
+                            "Category": category,
+                            "GoogleMapsURL": link
+                        })
+                        print(f"✅ {name} | {phone} | {website} | {address} | {rating} | {category}")
+                        time.sleep(2)
+                    except Exception as e:
+                        print(f"❌ Failed to scrape listing: {link}", e)
+        except Exception as e:
+            print(f"❌ Error during business_links processing: {e}")
 
     os.makedirs("output", exist_ok=True)
     with open("output/results_clickin_v3.csv", "w", newline="", encoding="utf-8") as f:
