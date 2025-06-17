@@ -41,17 +41,20 @@ def extract_contacts(lines):
     return names, phones, emails
 
 # ─── Scraper Function ──────────────────────────────────────────────────
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 def scrape_website_info(url: str):
     print(f"🌐 Scraping website: {url}")
     driver.get(url)
     time.sleep(5)
 
-    try:
+    contacts = {}
+
+    def extract_page_contacts():
         page_text = driver.find_element(By.TAG_NAME, "body").text
         lines = [line.strip() for line in page_text.split("\n") if line.strip()]
         print("🔎 Line sample:", lines[:10])
-
-        contacts = {}
 
         for i, line in enumerate(lines):
             email_match = re.search(EMAIL_REGEX, line)
@@ -60,7 +63,6 @@ def scrape_website_info(url: str):
             if email_match or phone_match:
                 name = ""
 
-                # Look BACK for a name-like line
                 for offset in range(1, 4):
                     if i - offset >= 0:
                         candidate = lines[i - offset]
@@ -75,7 +77,7 @@ def scrape_website_info(url: str):
                             break
 
                 if not name:
-                    continue  # Skip if no valid name
+                    continue
 
                 if name not in contacts:
                     contacts[name] = {"Name": name, "Phone": "", "Email": ""}
@@ -84,6 +86,27 @@ def scrape_website_info(url: str):
                     contacts[name]["Phone"] = phone_match.group()
                 if email_match:
                     contacts[name]["Email"] = email_match.group()
+
+    try:
+        # Grab all dropdown options first (by value)
+        select_xpath = "//select"
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, select_xpath)))
+        select_element = Select(driver.find_element(By.XPATH, select_xpath))
+        option_values = [opt.get_attribute("value") for opt in select_element.options]
+        print(f"🔽 Found {len(option_values)} page ranges")
+
+        for val in option_values:
+            # Refetch fresh select each time
+            select_element = Select(driver.find_element(By.XPATH, select_xpath))
+            select_element.select_by_value(val)
+
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//body[contains(., '@') or contains(., '403')]"))
+            )
+
+            print(f"➡️ Processing range: {val}")
+            extract_page_contacts()
+            time.sleep(1)
 
         final_results = list(contacts.values())
         print(f"✅ Final merged contacts: {final_results[:5]}...")
