@@ -2,15 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LeadMiner Lite</title>
-  <script src="app.js" defer></script>
+  <title>LeadMiner.ai</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>LeadMiner Email Generator</h1>
-  <form id="lead-form">
-    <input type="text" id="input" placeholder="Enter business name or URL" required />
-    <button type="submit">Generate Email</button>
-  </form>
-  <div id="result"></div>
+  <div class="container">
+    <div class="logo">
+      <img src="assets/Leadminer/Screenshot 2025-06-17 at 1.46.32 PM.png" alt="LeadMiner Logo" height="50" />
+
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab('maps')">Google Maps Scraper</button>
+      <button class="tab-button" onclick="switchTab('website')">Website Scraper</button>
+      <button class="tab-button coming-soon" disabled>Facebook Scraper (Coming Soon)</button>
+      <button class="tab-button coming-soon" disabled>LinkedIn Scraper (Coming Soon)</button>
+    </div>
+
+    <div id="maps" class="tab-content">
+      <h2>Google Maps Scraper</h2>
+      <input type="text" id="mapsInput" placeholder="e.g. gyms in Kelowna">
+      <button onclick="submitMapsSearch()">Scrape</button>
+    </div>
+
+    <div id="website" class="tab-content" style="display:none;">
+      <h2>Website Scraper</h2>
+      <input type="text" id="websiteInput" placeholder="https://example.com">
+      <button onclick="submitWebsiteScrape()">Scrape</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="resultArea"></div>
+    <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">Download CSV</button>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
