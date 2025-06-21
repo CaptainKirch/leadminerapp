@@ -1,11 +1,15 @@
+import os
+import time
+import re
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
-import re
+from app.enrichment.enrich_with_deepcrawl import run_email_enrichment
+from app.utils.s3 import upload_csv_to_s3
 
 def run_gmaps_scraper(keywords: list[str]) -> list[dict]:
     results = []
@@ -15,7 +19,7 @@ def run_gmaps_scraper(keywords: list[str]) -> list[dict]:
     options.add_argument("--window-size=1920,1080")
     # options.add_argument("--headless=new")
 
-    service = Service("./chromedriver")
+    service = Service("/Users/liamkircher/Desktop/leadminerapp/chromedriver-mac-arm64/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
     wait = WebDriverWait(driver, 10)
 
@@ -94,7 +98,6 @@ def run_gmaps_scraper(keywords: list[str]) -> list[dict]:
                     business_links.add(link)
 
             if len(business_links) == 0:
-                print("⚠️ No listings, scraping current page directly...")
                 try:
                     name, phone, website, address, rating, category = scrape_full_listing()
                     results.append({
@@ -133,4 +136,22 @@ def run_gmaps_scraper(keywords: list[str]) -> list[dict]:
             print(f"❌ Error during business_links processing: {e}")
 
     driver.quit()
-    return results
+
+    os.makedirs("output", exist_ok=True)
+    output_path = "output/results_clickin_v3.csv"
+    df = pd.DataFrame(results)
+    df.to_csv(output_path, index=False)
+    print(f"✅ Saved initial scrape to {output_path}")
+
+    print("📬 Starting email enrichment...")
+    run_email_enrichment(output_path)
+
+    enriched = pd.read_csv("output/results_with_deepcrawl_v3.csv")
+    enriched.fillna("", inplace=True)
+    print(f"✅ Enriched scrape complete with {len(enriched)} entries")
+
+    # Upload to S3
+    s3_key = f"leads_exports/{int(time.time())}_leads.csv"
+    upload_csv_to_s3("output/results_with_deepcrawl_v3.csv", s3_key)
+
+    return enriched.to_dict(orient="records")

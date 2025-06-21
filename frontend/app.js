@@ -22,7 +22,7 @@ async function submitMapsSearch() {
   downloadBtn.style.display = "none";
 
   try {
-    const response = await fetch("http://localhost:8001/scrape-website/", {
+    const response = await fetch("http://localhost:8000/scrape-lead/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input: query }),
@@ -37,15 +37,17 @@ async function submitMapsSearch() {
 
     status.innerText = `✅ Found ${data.length} leads!`;
 
-    let table = "<table><tr><th>Name</th><th>Phone</th><th>Website</th><th>Link</th></tr>";
+    let table = "<table><tr><th>Name</th><th>Phone</th><th>Website</th><th>Email</th><th>Link</th></tr>";
     data.forEach(item => {
       table += `<tr>
         <td>${item.Name}</td>
         <td>${item.Phone}</td>
         <td><a href="${item.Website}" target="_blank">${item.Website}</a></td>
+        <td>${item.Email || ""}</td>
         <td><a href="${item.Link}" target="_blank">Map</a></td>
       </tr>`;
     });
+
     table += "</table>";
 
     resultArea.innerHTML = table;
@@ -55,6 +57,7 @@ async function submitMapsSearch() {
     status.innerText = "❌ Error: " + err.message;
   }
 }
+
 async function submitWebsiteScrape() {
   const url = document.getElementById("websiteInput").value.trim();
   const status = document.getElementById("status");

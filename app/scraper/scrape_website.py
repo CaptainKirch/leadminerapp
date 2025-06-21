@@ -8,7 +8,8 @@ import re, time, os
 
 # ─── Brave + Driver Config ─────────────────────────────────────────────
 BRAVE_PATH = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
-CHROMEDRIVER_PATH = os.path.abspath("chromedriver-mac-arm64/chromedriver")
+CHROMEDRIVER_PATH = os.path.join(os.getcwd(), "chromedriver-mac-arm64", "chromedriver")
+
 
 options = Options()
 options.binary_location = BRAVE_PATH

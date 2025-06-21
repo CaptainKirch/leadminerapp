@@ -23,11 +23,13 @@ options.binary_location = "/Applications/Brave Browser.app/Contents/MacOS/Brave 
 options.add_argument("--window-size=1920,1080")
 options.add_argument("--headless=new")
 
+import os
+CHROMEDRIVER_PATH = os.path.abspath("chromedriver-mac-arm64/chromedriver")
+
 driver = webdriver.Chrome(
-    service=Service("/Users/liamkircher/Desktop/Deep Work/leadminerapp/chromedriver-mac-arm64/chromedriver"),
+    service=Service(CHROMEDRIVER_PATH),
     options=options
 )
-
 
 
 # ─── Helper Functions ──────────────────────────────────────────────────────

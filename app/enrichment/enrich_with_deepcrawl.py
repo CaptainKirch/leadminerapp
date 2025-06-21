@@ -112,7 +112,8 @@ def clean_url(url):
     except:
         return None
 
-def enrich_csv(csv_path="output/results_clickin_v3.csv"):
+def run_email_enrichment(csv_path="output/results_clickin_v3.csv"):
+
     df = pd.read_csv(csv_path)
 
     if "Email" not in df.columns:
@@ -148,4 +149,5 @@ def enrich_csv(csv_path="output/results_clickin_v3.csv"):
     print("✅ Saved to output/results_with_deepcrawl_v3.csv")
 
 if __name__ == "__main__":
-    enrich_csv()
+    run_email_enrichment()
+
