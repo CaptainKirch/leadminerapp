@@ -3,3 +3,4 @@ __MACOSX/
 .env
 output/
 *.csv
+__pycache__/
