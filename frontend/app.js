@@ -71,7 +71,7 @@ async function submitWebsiteScrape() {
   downloadBtn.style.display = "none";
 
   try {
-    const response = await fetch("http://localhost:8001/scrape-website/", {
+    const response = await fetch("http://localhost:8000/scrape-website/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input: url }),

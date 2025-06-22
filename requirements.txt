@@ -1,24 +1,10 @@
-# Core API framework
-fastapi
+fastapi[all]
 uvicorn
-
-# Web scraping
+pandas
 requests
 beautifulsoup4
-selenium
 lxml
-
-# Browser automation
-webdriver-manager
-
-# Email generation (assuming you're using GPT or logic-based templates)
-openai  # remove if not using GPT directly
-
-# Data manipulation
-pandas
-
-# Environment variables
 python-dotenv
-
-# Optional for CORS (useful for frontend API access)
-fastapi[all]  # includes starlette + CORS + jinja2 (if templating needed)
+boto3
+jinja2
+playwright
