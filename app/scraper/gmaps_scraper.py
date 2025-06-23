@@ -9,7 +9,7 @@ from app.utils.s3 import upload_csv_to_s3
 EMAIL_REGEX = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
 PHONE_REGEX = r"\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}"
 
-def run_gmaps_scraper(keywords: list[str], max_listings=30, enrich=True) -> list[dict]:
+def run_gmaps_scraper(keywords: list[str], max_listings=70, enrich=True) -> list[dict]:
     results = []
     os.makedirs("output", exist_ok=True)
 
