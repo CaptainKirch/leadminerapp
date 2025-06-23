@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <title>LeadMiner.ai</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="container">
     <div class="logo">
-      <img src="assets/Leadminer/Screenshot 2025-06-17 at 1.46.32 PM.png" alt="LeadMiner Logo" height="50" />
-
+      <img src="/static/logo.png" alt="LeadMiner Logo" height="50" />
+    </div>
 
     <div class="tabs">
       <button class="tab-button active" onclick="switchTab('maps')">Google Maps Scraper</button>
-      <button class="tab-button" onclick="switchTab('website')">Website Scraper</button>
       <button class="tab-button coming-soon" disabled>Facebook Scraper (Coming Soon)</button>
       <button class="tab-button coming-soon" disabled>LinkedIn Scraper (Coming Soon)</button>
       <button class="tab-button coming-soon" disabled>Instagram Scraper (Coming Soon)</button>
@@ -36,6 +35,6 @@
     <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">Download CSV</button>
   </div>
 
-  <script src="app.js"></script>
+  <script src="/static/app.js" defer></script>
 </body>
 </html>

@@ -2,9 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-
 from app.scraper.gmaps_scraper import run_gmaps_scraper
-from app.scraper.scrape_website import scrape_website_info
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -55,10 +53,14 @@ def scrape_lead(payload: LeadInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/scrape-website/")
-def scrape_website(payload: LeadInput):
-    try:
-        result = scrape_website_info(payload.input)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_frontend():
+    return FileResponse("static/index.html")

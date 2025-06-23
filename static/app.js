@@ -1,5 +1,3 @@
-// app.js
-
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
   document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -49,7 +47,6 @@ async function submitMapsSearch() {
     });
 
     table += "</table>";
-
     resultArea.innerHTML = table;
     window.lastResults = data;
     downloadBtn.style.display = "inline-block";
@@ -58,75 +55,14 @@ async function submitMapsSearch() {
   }
 }
 
-async function submitWebsiteScrape() {
-  const url = document.getElementById("websiteInput").value.trim();
-  const status = document.getElementById("status");
-  const resultArea = document.getElementById("resultArea");
-  const downloadBtn = document.getElementById("downloadBtn");
-
-  if (!url) return alert("Please enter a website URL.");
-
-  status.innerText = "Scraping website...";
-  resultArea.innerHTML = "";
-  downloadBtn.style.display = "none";
-
-  try {
-    const response = await fetch("http://localhost:8000/scrape-website/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input: url }),
-    });
-
-    const data = await response.json();
-    console.log("✅ Website scrape response:", data);
-
-    if (!Array.isArray(data) || data.length === 0) {
-      status.innerText = "❌ No contact info found.";
-      return;
-    }
-
-    // Build HTML table
-    let html = "<table><tr><th>Name</th><th>Phone</th><th>Email</th></tr>";
-    data.forEach(entry => {
-    html += `<tr>
-    <td>${entry.Name || ""}</td>
-    <td>${entry.Phone || ""}</td>
-    <td>${entry.Email || ""}</td>
-  </tr>`;
-});
-
-    html += "</table>";
-
-    resultArea.innerHTML = html;
-    window.lastResults = data;
-    downloadBtn.style.display = "inline-block";
-    status.innerText = `✅ Found ${data.length} contact entries.`;
-  } catch (err) {
-    status.innerText = "❌ Error: " + err.message;
-  }
-}
-
-
 function downloadCSV() {
   const rows = window.lastResults;
   if (!rows || rows.length === 0) return;
 
-  let csv = "";
-
-  if (Array.isArray(rows)) {
-    csv = [
-      Object.keys(rows[0]).join(","),
-      ...rows.map(r => Object.values(r).map(x => `"${String(x).replace(/"/g, '""')}"`).join(","))
-    ].join("\n");
-  } else {
-    const keys = Object.keys(rows).filter(k => Array.isArray(rows[k]));
-    csv = "Type,Value\n";
-    keys.forEach(key => {
-      rows[key].forEach(value => {
-        csv += `${key},"${value}"\n`;
-      });
-    });
-  }
+  let csv = [
+    Object.keys(rows[0]).join(","),
+    ...rows.map(r => Object.values(r).map(x => `"${String(x).replace(/"/g, '""')}"`).join(","))
+  ].join("\n");
 
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
